@@ -676,7 +676,7 @@ async function loadProducts() {
     <div class="loading-text">Loading products from Google Sheets…</div>
   </div>`;
 
-  if (!SHEET_API_URL || SHEET_API_URL === 'https://script.google.com/macros/s/AKfycbwPUvksg-52AgpEekf2LxIBIFKMqt-8gU5epCsHOgth6w7BlG1SNhrmH1nWluzx2Tojfw/exec') {
+  if (!SHEET_API_URL || SHEET_API_URL === 'SHEET_API_URL') {
     products = FALLBACK_PRODUCTS;
     dataFromSheet = false;
     setDataSource(false, 'Using demo data — connect Google Sheet to go live');
