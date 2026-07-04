@@ -814,7 +814,7 @@ function renderGrid(list) {
         <div class="product-desc">${desc}</div>
       </div>
       <div class="product-footer">
-        <div class="product-price">$${parseFloat(p.price).toFixed(2)}</div>
+        <div class="product-price">AED${parseFloat(p.price).toFixed(2)}</div>
         <button class="add-btn" onclick="event.stopPropagation();addToCart(${p.id})" ${s==='out'?'disabled':''}>
           ${s === 'out' ? 'Sold Out' : 'Add to Cart'}
         </button>
