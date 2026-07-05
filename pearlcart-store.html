@@ -1076,12 +1076,12 @@ function convertDriveUrl(url) {
 // Builds img HTML with automatic Drive URL conversion + emoji fallback
 function imgHtml(p) {
   const raw = (p.image_url || '').toString().trim();
-  if (!raw) return `<span class="emoji-fallback">${p.emoji || '📦'}</span>`;
+  if (!raw) return `<span class="emoji-fallback">${p.emoji || ''}</span>`;
 
   const urls = convertDriveUrl(raw);
   const primary = urls[0];
   const fallbacks = urls.slice(1);
-  const emoji = p.emoji || '📦';
+  const emoji = p.emoji || '';
 
   // Build a JS-safe fallback chain string
   // Each onerror tries the next URL, final fallback removes the img to show emoji
