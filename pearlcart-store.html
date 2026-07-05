@@ -995,11 +995,11 @@ async function loadProducts() {
     renderGrid(products);
     grid.insertAdjacentHTML('beforebegin', `
       <div class="sheet-error">
-        <strong>⚠ Could not load items</strong>
+        <strong>⚠ Could not load from products</strong>
         <p><strong>Error:</strong> ${err.message}</p>
         <p style="margin-top:6px;">Common fixes: ① Make sure access is set to <strong>Anyone</strong> in your Apps Script deployment. ② Create a <strong>New Version</strong> when redeploying. ③ Paste the URL directly in your browser — you should see JSON data.</p>
       </div>`);
-    toast('Could not reach data — check the error above', 'err');
+    toast('Could not reach Database — check the error above', 'err');
   }
 }
 
@@ -1035,17 +1035,72 @@ function showPage(name) {
 }
 
 // ══════════════════════════════════════════════════════════
-// PRODUCT IMAGE HELPER
+// GOOGLE DRIVE URL CONVERTER + IMAGE HELPER
 // ══════════════════════════════════════════════════════════
-function imgHtml(p) {
-  const url = (p.image_url || '').toString().trim();
-  if (url) {
-    return `<img src="${url}" alt="${p.name}"
-              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;"
-              onerror="this.remove();">
-            <span class="emoji-fallback" style="position:relative;z-index:0;">${p.emoji || '📦'}</span>`;
+
+// Extracts the file ID from any Google Drive URL format
+function getDriveFileId(url) {
+  // Format: /file/d/FILE_ID/view
+  let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // Format: id=FILE_ID
+  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // Format: /open?id=FILE_ID
+  m = url.match(/open\?id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  return null;
+}
+
+// Returns the best direct image URL from any Google Drive link
+// Tries thumbnail API first (most reliable for CORS), then direct export
+function convertDriveUrl(url) {
+  if (!url) return null;
+  url = url.trim();
+  if (!url.includes('drive.google.com') && !url.includes('docs.google.com')) {
+    return [url]; // Not a Drive link — use as-is
   }
-  return `<span class="emoji-fallback">${p.emoji || '📦'}</span>`;
+  const id = getDriveFileId(url);
+  if (!id) return [url];
+  // Return multiple fallback URLs to try in order:
+  // 1. Thumbnail API — most CORS-friendly, works on GitHub Pages
+  // 2. uc export with confirm bypass
+  // 3. Standard uc export
+  return [
+    `https://drive.google.com/thumbnail?id=${id}&sz=w800`,
+    `https://drive.google.com/uc?export=view&id=${id}&confirm=t`,
+    `https://drive.google.com/uc?export=view&id=${id}`,
+  ];
+}
+
+// Builds img HTML with automatic Drive URL conversion + emoji fallback
+function imgHtml(p) {
+  const raw = (p.image_url || '').toString().trim();
+  if (!raw) return `<span class="emoji-fallback">${p.emoji || '📦'}</span>`;
+
+  const urls = convertDriveUrl(raw);
+  const primary = urls[0];
+  const fallbacks = urls.slice(1);
+  const emoji = p.emoji || '📦';
+
+  // Build a JS-safe fallback chain string
+  // Each onerror tries the next URL, final fallback removes the img to show emoji
+  let onerrorChain = '';
+  if (fallbacks.length > 0) {
+    // Build nested fallback: try url[1], then url[2], then remove
+    let chain = `this.remove()`;
+    for (let i = fallbacks.length - 1; i >= 0; i--) {
+      chain = `this.src='${fallbacks[i]}';this.onerror=function(){${chain}}`;
+    }
+    onerrorChain = chain;
+  } else {
+    onerrorChain = `this.remove()`;
+  }
+
+  return `<img src="${primary}" alt="${p.name}"
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;"
+            onerror="${onerrorChain}">
+          <span class="emoji-fallback" style="position:relative;z-index:0;">${emoji}</span>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1164,10 +1219,19 @@ function renderDropdown(matches, q) {
   } else {
     const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
     dd.innerHTML = matches.slice(0, 6).map(p => {
-      const ddUrl = (p.image_url || '').toString().trim();
-      const ddImg = ddUrl
-        ? `<img src="${ddUrl}" style="width:28px;height:28px;object-fit:cover;border-radius:7px;flex-shrink:0;" onerror="this.outerHTML='<span>${p.emoji||'📦'}</span>'">`
-        : `<span>${p.emoji || '📦'}</span>`;
+      const ddRaw  = (p.image_url || '').toString().trim();
+      const ddUrls = ddRaw ? convertDriveUrl(ddRaw) : [];
+      let ddImg;
+      if (ddUrls.length) {
+        const ddFb = ddUrls.slice(1);
+        let ddChain = `this.outerHTML='<span>${p.emoji||'📦'}</span>'`;
+        for (let i = ddFb.length - 1; i >= 0; i--) {
+          ddChain = `this.src='${ddFb[i]}';this.onerror=function(){${ddChain}}`;
+        }
+        ddImg = `<img src="${ddUrls[0]}" style="width:28px;height:28px;object-fit:cover;border-radius:7px;flex-shrink:0;" onerror="${ddChain}">`;
+      } else {
+        ddImg = `<span>${p.emoji || '📦'}</span>`;
+      }
       return `
       <div class="search-dd-item" onclick="selectSearchResult(${p.id})">
         <span class="search-dd-emoji">${ddImg}</span>
@@ -1236,16 +1300,23 @@ function openDetail(id) {
 
   document.getElementById('dm-title').textContent = p.name;
 
-  const imgUrl = (p.image_url || '').toString().trim();
+  const rawImgUrl = (p.image_url || '').toString().trim();
   const fallbackEmoji = p.emoji || '📦';
-  const imgBlock = imgUrl
-    ? `<div id="dm-img-wrap" style="width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;margin-bottom:20px;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.5);">
-         <img src="${imgUrl}" alt="${p.name}"
-           style="width:100%;height:100%;object-fit:cover;"
-           onload="this.style.display='block';"
-           onerror="document.getElementById('dm-img-wrap').innerHTML='<div style=font-size:72px;padding:20px;>${fallbackEmoji}</div>';">
-       </div>`
-    : `<div class="detail-img">${fallbackEmoji}</div>`;
+  let imgBlock;
+  if (rawImgUrl) {
+    const dmUrls  = convertDriveUrl(rawImgUrl);
+    const dmPrimary   = dmUrls[0];
+    const dmFallbacks = dmUrls.slice(1);
+    let dmChain = `var w=document.getElementById('dm-img-wrap');if(w)w.innerHTML='<div style=\"font-size:72px;padding:20px;text-align:center\">${fallbackEmoji}</div>'`;
+    for (let i = dmFallbacks.length - 1; i >= 0; i--) {
+      dmChain = `this.src='${dmFallbacks[i]}';this.onerror=function(){${dmChain}}`;
+    }
+    imgBlock = `<div id="dm-img-wrap" style="width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;margin-bottom:20px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.08);">
+         <img src="${dmPrimary}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="${dmChain}">
+       </div>`;
+  } else {
+    imgBlock = `<div class="detail-img">${fallbackEmoji}</div>`;
+  }
 
   document.getElementById('dm-body').innerHTML = `
     ${imgBlock}
@@ -1331,9 +1402,19 @@ function renderCart() {
     el.innerHTML = cart.map(c => {
       const p = products.find(x => x.id === c.id); if (!p) return '';
       const imgUrl = (p.image_url || '').toString().trim();
-      const thumbContent = imgUrl
-        ? `<img src="${imgUrl}" alt="${p.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove();">${p.emoji || '📦'}`
-        : (p.emoji || '📦');
+      const thumbUrls = imgUrl ? convertDriveUrl(imgUrl) : [];
+      let thumbContent;
+      if (thumbUrls.length) {
+        const tPrimary = thumbUrls[0];
+        const tFallbacks = thumbUrls.slice(1);
+        let tChain = 'this.remove()';
+        for (let i = tFallbacks.length - 1; i >= 0; i--) {
+          tChain = `this.src='${tFallbacks[i]}';this.onerror=function(){${tChain}}`;
+        }
+        thumbContent = `<img src="${tPrimary}" alt="${p.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="${tChain}">${p.emoji || '📦'}`;
+      } else {
+        thumbContent = p.emoji || '📦';
+      }
       return `<div class="cart-item">
         <div class="cart-thumb">${thumbContent}</div>
         <div class="cart-info">
