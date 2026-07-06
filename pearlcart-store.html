@@ -836,7 +836,7 @@
         <div class="summary-total"><span>Total</span><span id="s-total">$0.00</span></div>
         <button class="btn btn-glass" style="width:100%;margin-top:20px;justify-content:center;padding:14px;" onclick="goToCheckout()">Proceed to Checkout →</button>
         <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="showPage('catalog')">Continue Shopping</button>
-        <div class="summary-note">🔒 Secure checkout · 30-day returns</div>
+        <div class="summary-note">🔒 Secure checkout</div>
       </div>
     </div>
   </div>
@@ -1400,7 +1400,7 @@ function openDetail(id) {
     <div class="detail-price">$${parseFloat(p.price).toFixed(2)}</div>
     <div class="detail-desc">${desc}</div>
     ${p.type==='physical'
-      ? `<p style="font-size:13px;color:var(--ink-light);">🚚 Free shipping over $75 &nbsp;·&nbsp; 30-day returns</p>`
+      ? `<p style="font-size:13px;color:var(--ink-light);">🚚 Free shipping over $75 &nbsp;·&nbsp;</p>`
       : `<p style="font-size:13px;color:var(--accent);">⚡ Instant download after purchase</p>`}
   `;
 
