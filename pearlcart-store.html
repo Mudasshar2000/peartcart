@@ -830,9 +830,9 @@
       <div class="cart-card" id="cartItemsEl"></div>
       <div class="summary-box">
         <div class="summary-title">Order Summary</div>
-        <div class="summary-row"><span>Subtotal</span><span id="s-sub">$0.00</span></div>
-        <div class="summary-row"><span>Shipping</span><span id="s-ship">—</span></div>
-        <div class="summary-row"><span>Tax (10%)</span><span id="s-tax">$0.00</span></div>
+        <div class="summary-row"><span>Subtotal</span><span id="s-sub">Rs. 0.00</span></div>
+        <div class="summary-row"><span>Discount</span><span id="s-disc">Rs. 0.00</span></div>
+        <div class="summary-row"><span>Shipping</span><span id="s-ship">Rs. 450.00</span></div>
         <div class="summary-total"><span>Total</span><span id="s-total">$0.00</span></div>
         <button class="btn btn-accent" style="width:100%;margin-top:20px;justify-content:center;padding:14px;" onclick="goToCheckout()">Proceed to Checkout →</button>
         <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="showPage('catalog')">Continue Shopping</button>
@@ -936,9 +936,9 @@
           <div class="summary-title">Your Order</div>
           <div id="co-items"></div>
           <div class="divider"></div>
-          <div class="summary-row"><span>Subtotal</span><span id="co-sub">$0.00</span></div>
-          <div class="summary-row"><span>Shipping</span><span id="co-ship">—</span></div>
-          <div class="summary-row"><span>Tax (10%)</span><span id="co-tax">$0.00</span></div>
+          <div class="summary-row"><span>Subtotal</span><span id="co-sub">Rs. 0.00</span></div>
+          <div class="summary-row"><span>Discount</span><span id="co-disc">Rs. 0.00</span></div>
+          <div class="summary-row"><span>Shipping</span><span id="co-ship">Rs. 450.00</span></div>
           <div class="summary-total"><span>Total</span><span id="co-total">$0.00</span></div>
           <div class="summary-note" style="margin-top:14px;">💵 Pay cash when your order arrives</div>
         </div>
@@ -1452,9 +1452,9 @@ function updateBadge() {
 function calcTotals() {
   const sub     = cart.reduce((s, c) => { const p = products.find(x => x.id === c.id); return s + (p ? parseFloat(p.price) * c.qty : 0); }, 0);
   const hasPhys = cart.some(c => { const p = products.find(x => x.id === c.id); return p && p.type === 'physical'; });
-  const ship    = hasPhys && sub > 0 ? 500 : 0;
-  const tax     = sub * 0.10;
-  return {sub, ship, tax, total: sub + ship + tax};
+  const disc = 0;
+  const ship = hasPhys && sub > 0 ? 450 : 0;
+  return {sub, disc, ship, total: sub + ship};
 }
 
 function fmt(v) { return 'Rs. ' + parseFloat(v).toFixed(2); }
@@ -1505,8 +1505,8 @@ function renderCart() {
     ? cart.reduce((s, c) => s + c.qty, 0) + ' item(s) in your cart' : '';
   const t = calcTotals();
   document.getElementById('s-sub').textContent  = fmt(t.sub);
+  document.getElementById('s-disc').textContent = fmt(t.disc);
   document.getElementById('s-ship').textContent = t.ship ? fmt(t.ship) : 'Free';
-  document.getElementById('s-tax').textContent  = fmt(t.tax);
   document.getElementById('s-total').textContent= fmt(t.total);
 }
 
@@ -1520,8 +1520,8 @@ function renderCheckout() {
     </div>`;
   }).join('') || '<div style="color:var(--ink-light);font-size:14px;">No items.</div>';
   document.getElementById('co-sub').textContent  = fmt(t.sub);
+  document.getElementById('co-disc').textContent = fmt(t.disc);
   document.getElementById('co-ship').textContent = t.ship ? fmt(t.ship) : 'Free';
-  document.getElementById('co-tax').textContent  = fmt(t.tax);
   document.getElementById('co-total').textContent= fmt(t.total);
 }
 
