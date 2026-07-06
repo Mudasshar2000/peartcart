@@ -831,9 +831,8 @@
       <div class="summary-box">
         <div class="summary-title">Order Summary</div>
         <div class="summary-row"><span>Subtotal</span><span id="s-sub">$0.00</span></div>
-        <div class="summary-row"><span>Discount</span><span id="s-dis">—</span></div>
-        <div class="summary-row"><span>Shipping</span><span id="s-ship">$450.00</span></div>
-        
+        <div class="summary-row"><span>Shipping</span><span id="s-ship">—</span></div>
+        <div class="summary-row"><span>Tax (10%)</span><span id="s-tax">$0.00</span></div>
         <div class="summary-total"><span>Total</span><span id="s-total">$0.00</span></div>
         <button class="btn btn-accent" style="width:100%;margin-top:20px;justify-content:center;padding:14px;" onclick="goToCheckout()">Proceed to Checkout →</button>
         <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;" onclick="showPage('catalog')">Continue Shopping</button>
@@ -937,9 +936,10 @@
           <div class="summary-title">Your Order</div>
           <div id="co-items"></div>
           <div class="divider"></div>
-          <div class="summary-row"><span>Subtotal</span><span id="s-sub">$0.00</span></div>
-          <div class="summary-row"><span>Discount</span><span id="s-dis">—</span></div>
-          <div class="summary-row"><span>Shipping</span><span id="s-ship">$450.00</span></div>
+          <div class="summary-row"><span>Subtotal</span><span id="co-sub">$0.00</span></div>
+          <div class="summary-row"><span>Shipping</span><span id="co-ship">—</span></div>
+          <div class="summary-row"><span>Tax (10%)</span><span id="co-tax">$0.00</span></div>
+          <div class="summary-total"><span>Total</span><span id="co-total">$0.00</span></div>
           <div class="summary-note" style="margin-top:14px;">💵 Pay cash when your order arrives</div>
         </div>
       </div>
