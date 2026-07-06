@@ -798,7 +798,7 @@
           </span>
         </div>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="loadProducts()" title="Refresh from Google Sheet">↻ Refresh</button>
+      <button class="btn btn-outline btn-sm" onclick="loadProducts()" title="Refresh from Database">↻ Refresh</button>
     </div>
     <div class="filter-row">
       <select class="sort-select" id="sortSelect" onchange="sortBy(this.value)">
@@ -1014,7 +1014,7 @@ async function loadProducts() {
   const grid = document.getElementById('productGrid');
   grid.innerHTML = `<div class="loading-screen" style="grid-column:1/-1">
     <div class="spinner"></div>
-    <div class="loading-text">Loading products from Google Sheets…</div>
+    <div class="loading-text">Loading products…</div>
   </div>`;
 
   // ── URL NOT SET ──
@@ -1027,7 +1027,7 @@ async function loadProducts() {
     // Show a visible banner so it's obvious what's happening
     grid.insertAdjacentHTML('beforebegin', `
       <div class="sheet-error">
-        <strong>⚙ Google Sheets not connected yet</strong>
+        <strong>⚙ System not connected yet</strong>
         <p>Open <code>pearlcart-store.html</code>, find <code>const SHEET_API_URL = 'YOUR_APPS_SCRIPT_URL_HERE'</code> and replace it with your deployed Apps Script URL. Then re-upload to GitHub.</p>
       </div>`);
     return;
@@ -1054,7 +1054,7 @@ async function loadProducts() {
     setDataSource(true, `Live · ${products.length} products · refreshed at ${now}`);
     buildCatNav();
     renderGrid(products);
-    toast(`✓ ${products.length} products loaded from Google Sheets`, 'ok');
+    toast(`✓ ${products.length} products loaded`, 'ok');
 
   } catch (err) {
     console.warn('Sheet fetch failed:', err.message);
@@ -1065,11 +1065,11 @@ async function loadProducts() {
     renderGrid(products);
     grid.insertAdjacentHTML('beforebegin', `
       <div class="sheet-error">
-        <strong>⚠ Could not load from Google Sheets</strong>
+        <strong>⚠ Could not load from Database</strong>
         <p><strong>Error:</strong> ${err.message}</p>
         <p style="margin-top:6px;">Common fixes: ① Make sure access is set to <strong>Anyone</strong> in your Apps Script deployment. ② Create a <strong>New Version</strong> when redeploying. ③ Paste the URL directly in your browser — you should see JSON data.</p>
       </div>`);
-    toast('Could not reach Google Sheets — check the error above', 'err');
+    toast('Could not reach Database — check the error above', 'err');
   }
 }
 
